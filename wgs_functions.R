@@ -2,7 +2,6 @@
 #Pavitra Roychoudhury
 #Aug 2017
 
-
 #Return the number of mapped reads in a bam file
 n_mapped_reads<-function(bamfname){
   require(Rsamtools)
@@ -18,7 +17,7 @@ n_mapped_reads<-function(bamfname){
 generate_consensus<-function(bamfname){
   if(!is.na(bamfname)&class(try(scanBamHeader(bamfname),silent=T))!='try-error'){
     
-    #Index bam if required
+  	#Index bam if required
     if(!file.exists(paste(bamfname,'.bai',sep=''))){
       baifname<-indexBam(bamfname); 
     }else{
@@ -29,10 +28,10 @@ generate_consensus<-function(bamfname){
     params<-ScanBamParam(flag=scanBamFlag(isUnmappedQuery=FALSE),
                          what=c('qname','rname','strand','pos','qwidth','mapq','cigar','seq'));
     gal<-readGAlignments(bamfname,index=baifname,param=params);
-    summary(gal);
+    # summary(gal);
     
     #Remove any contigs with mapq <2
-    gal<-gal[mcols(gal)$mapq>2];
+    # gal<-gal[mcols(gal)$mapq>2];
     
     #Fill gaps with Ns and generate consensus
     qseq_on_ref<-sequenceLayer(mcols(gal)$seq,cigar(gal),from="query",to="reference");
