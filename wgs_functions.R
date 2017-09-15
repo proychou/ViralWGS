@@ -13,8 +13,123 @@ n_mapped_reads<-function(bamfname){
   }
 }
 
+
+
+#Make a new reference from scaffolds
+make_ref_from_assembly<-function(bamfname,reffname,ncores){
+	require(Rsamtools);
+	require(GenomicAlignments);
+	require(parallel)
+	
+	#Read reference sequence
+	ref_seq<-readDNAStringSet(reffname);
+	
+	if(!is.na(bamfname)&class(try(scanBamHeader(bamfname),silent=T))!='try-error'){
+		
+		#Index bam if required
+		if(!file.exists(paste(bamfname,'.bai',sep=''))){
+			baifname<-indexBam(bamfname); 
+		}else{
+			baifname<-paste(bamfname,'.bai',sep='');
+		}
+		
+		#Import bam file
+		params<-ScanBamParam(flag=scanBamFlag(isUnmappedQuery=FALSE),
+												 what=c('qname','rname','strand','pos','qwidth','mapq','cigar','seq'));
+		gal<-readGAlignments(bamfname,index=baifname,param=params);
+
+		#Remove any contigs with width <100 bp
+		gal<-gal[qwidth(gal)>100];
+		
+		#First lay contigs on reference space--this removes insertions and produces a seq of the same length as ref
+		qseq_on_ref<-sequenceLayer(mcols(gal)$seq,cigar(gal),from="query",to="reference");
+		qseq_on_ref_aligned<-stackStrings(qseq_on_ref,1,max(mcols(gal)$pos+qwidth(gal)-1,width(ref_seq)),
+																			shift=mcols(gal)$pos-1,Lpadding.letter='N',Rpadding.letter='N');
+		
+		#Make a consensus matrix and get a consensus sequence from the aligned scaffolds
+		cm<-consensusMatrix(qseq_on_ref_aligned,as.prob=T,shift=0)[c('A','C','G','T','N','-'),];
+		cm['N',]<-0;
+		cm<-apply(cm,2,function(x)if(all(x==0))return(x) else return(x/sum(x)));
+		cm['N',colSums(cm)==0]<-1;
+		con_seq<-DNAStringSet(consensusString(cm,threshold=0.25));
+		con_seq<-DNAStringSet(gsub('\\+','N',con_seq));
+		
+		#Now fill in the Ns with the reference
+		temp<-as.matrix(con_seq);
+		temp[temp=='N']<-as.matrix(ref_seq)[temp=='N'];
+		con_seq<-DNAStringSet(paste0(temp,collapse=''));
+		names(con_seq)<-sub('.bam','_consensus',basename(bamfname));
+		
+		#Look for insertions in bam cigar string
+		cigs_ref<-cigarRangesAlongReferenceSpace(cigar(gal),with.ops=F,ops='I',
+																						 reduce.ranges=T,drop.empty.ranges=F,
+																						 pos=mcols(gal)$pos);
+		cigs_query<-cigarRangesAlongQuerySpace(cigar(gal),ops='I',with.ops=F,
+																					 reduce.ranges=T,drop.empty.ranges=F);
+		all_ins<-mclapply(c(1:length(cigs_query)),function(i)
+		  extractAt(mcols(gal)$seq[i],cigs_query[[i]])[[1]]);
+		
+		#Merge all insertions
+		all_ins_merged<-do.call('rbind',mclapply(c(1:length(cigs_ref)),function(i)
+		  return(data.frame(
+		    start_ref=start(cigs_ref[[i]]),end_ref=end(cigs_ref[[i]]),
+		    start_query=start(cigs_query[[i]]),end_query=end(cigs_query[[i]]),
+		    ins_seq=all_ins[[i]],width_ins=width(all_ins[[i]]))),
+		  mc.cores=ncores));
+		all_ins_merged<-all_ins_merged[order(all_ins_merged$end_ref),];
+		# write.csv(all_ins_merged,'./testing/all_ins.csv',row.names=F);
+		
+		#TO DO: Check for overlaps--should be minimal since scaffolds don't usually overlap that much
+		if(any(table(all_ins_merged$start_ref)>1)) browser()
+		
+		#Now the beauty part of inserting the strings back in
+		#Split ref seq by the insert positions
+		new_strs<-DNAStringSet(rep('',nrow(all_ins_merged)))
+		for(i in 1:nrow(all_ins_merged)){
+			if(i==1){
+				new_strs[i]<-paste0(extractAt(con_seq,IRanges(start=1,end=all_ins_merged$end_ref[i]))[[1]],
+														all_ins_merged$ins_seq[i]);
+			}else if(i==nrow(all_ins_merged)){
+				new_strs[i]<-paste0(all_ins_merged$ins_seq[i],
+				                    extractAt(con_seq,IRanges(start=all_ins_merged$start_ref[i],
+				                                              end=width(con_seq)))[[1]])
+			}else{
+				new_strs[i]<-paste0(extractAt(con_seq,IRanges(start=all_ins_merged$start_ref[i-1],
+				                                              end=all_ins_merged$end_ref[i]))[[1]],
+				                    all_ins_merged$ins_seq[i]);
+			}
+		}
+		temp_str<-paste0(as.character(new_strs),collapse='');
+		
+		#Remove gaps to get final sequence
+		con_seq_final<-DNAStringSet(gsub('-','',temp_str));
+		names(con_seq_final)<-sub('.bam','_consensus',basename(bamfname));
+		
+		if(!dir.exists('./ref_for_remapping')) dir.create('./ref_for_remapping');
+		writeXStringSet(con_seq_final,
+		                paste0('./ref_for_remapping/',names(con_seq_final),'.fasta'));
+		
+		#Delete bai file
+		file.remove(baifname);
+		
+	}else{
+		return(NA)
+	}
+}
+
+
+
 #Takes in a bam file, produces consensus sequence
 generate_consensus<-function(bamfname){
+  require(Rsamtools)
+  require(GenomicAlignments)
+  require(Biostrings)
+	require(parallel)
+	ncores<-detectCores()
+	
+	#for testing this function--comment out or remove
+	# bamfname<-'./testing/ABI-HHV6A_S385_L001_A.sorted.bam'
+	
   if(!is.na(bamfname)&class(try(scanBamHeader(bamfname),silent=T))!='try-error'){
     
   	#Index bam if required
@@ -31,20 +146,76 @@ generate_consensus<-function(bamfname){
     # summary(gal);
     
     #Remove any contigs with mapq <2
-    # gal<-gal[mcols(gal)$mapq>2];
+    gal<-gal[mcols(gal)$mapq>2];
     
-    #Fill gaps with Ns and generate consensus
+    #First lay reads on reference space--this doesn't include insertions
     qseq_on_ref<-sequenceLayer(mcols(gal)$seq,cigar(gal),from="query",to="reference");
-    cm<-consensusMatrix(qseq_on_ref,as.prob=T,shift=start(gal)-1,width=seqlengths(gal))
-    cm["+", colSums(cm) == 0] <- 1
-    con_seq<-DNAStringSet(consensusString(cm, ambiguityMap='N'));
-    con_seq<-DNAStringSet(gsub('\\+','N',con_seq));
+
+    #Make a consensus matrix and get a consensus sequence from the aligned scaffolds
+    cm<-consensusMatrix(qseq_on_ref,as.prob=T,shift=start(gal)-1,width=seqlengths(gal))[c('A','C','G','T','N','-'),];
+    cm['N',colSums(cm)==0]<-1;
+    tmp_str<-strsplit(consensusString(cm,ambiguityMap='?',threshold=0.5),'')[[1]];
+    ambig_sites<-which(tmp_str=='?');
+    ambig_bases<-unlist(lapply(ambig_sites,function(i){mixedbase<-paste(names(cm[,i])[cm[,i]>0],collapse=''); 
+    			 if(mixedbase%in%IUPAC_CODE_MAP) return(names(IUPAC_CODE_MAP)[IUPAC_CODE_MAP==mixedbase]) 
+    else return('N')}));
+    tmp_str[ambig_sites]<-ambig_bases
+    con_seq<-DNAStringSet(paste0(tmp_str,collapse='')); 
     names(con_seq)<-sub('.bam','_consensus',basename(bamfname));
-      
+    rm(tmp_str);
+    
+    #Look for insertions in bam cigar string--this is not practical with mapped reads
+    #Takes too much time. Need to figure out a way to merge duplicates. 
+    #In any case, most insertions should have been captured in assembly so should be in consensus
+    # cigs_ref<-cigarRangesAlongReferenceSpace(cigar(gal),with.ops=F,ops='I',
+    # 																				 reduce.ranges=T,drop.empty.ranges=F,
+    # 																				 pos=mcols(gal)$pos);
+    # cigs_query<-cigarRangesAlongQuerySpace(cigar(gal),ops='I',with.ops=F,
+    # 																			 reduce.ranges=T,drop.empty.ranges=F);
+    # all_ins<-mclapply(c(1:length(cigs_query)),function(i)
+    # 	extractAt(mcols(gal)$seq[i],cigs_query[[i]])[[1]]);
+    
+    # #Merge all insertions
+    # all_ins_merged<-do.call('rbind',mclapply(c(1:length(cigs_ref)),function(i)
+    # 	return(data.frame(
+    # 		start_ref=start(cigs_ref[[i]]),end_ref=end(cigs_ref[[i]]),
+    # 		start_query=start(cigs_query[[i]]),end_query=end(cigs_query[[i]]),
+    # 		ins_seq=all_ins[[i]],width_ins=width(all_ins[[i]]))),
+    # 	mc.cores=ncores));
+    # all_ins_merged<-all_ins_merged[order(all_ins_merged$end_ref),];
+    # # write.csv(all_ins_merged,'./testing/all_ins.csv',row.names=F);
+    # 
+    # #TO DO: Check for overlapping insertions and figure out how to deal with them
+    # if(any(table(all_ins_merged$start_ref)>1)) browser()
+    # 
+    # #Now the beauty part of inserting the strings back in
+    # #Split ref seq by the insert positions
+    # new_strs<-DNAStringSet(rep('',nrow(all_ins_merged)))
+    # for(i in 1:nrow(all_ins_merged)){
+    # 	if(i==1){
+    # 		new_strs[i]<-paste0(extractAt(con_seq,IRanges(start=1,end=all_ins_merged$end_ref[i]))[[1]],
+    # 												all_ins_merged$ins_seq[i]);
+    # 	}else if(i==nrow(all_ins_merged)){
+    # 		new_strs[i]<-paste0(all_ins_merged$ins_seq[i],
+    # 												extractAt(con_seq,IRanges(start=all_ins_merged$start_ref[i],
+    # 																									end=width(con_seq)))[[1]])
+    # 	}else{
+    # 		new_strs[i]<-paste0(extractAt(con_seq,IRanges(start=all_ins_merged$start_ref[i-1],
+    # 																									end=all_ins_merged$end_ref[i]))[[1]],
+    # 												all_ins_merged$ins_seq[i]);
+    # 	}
+    # }
+    # temp_str<-paste0(as.character(new_strs),collapse='');
+    
+    #Remove gaps to get final sequence
+    # con_seq_final<-DNAStringSet(gsub('-','',temp_str));
+    con_seq_final<-DNAStringSet(gsub('-','',con_seq));
+    names(con_seq_final)<-sub('.bam','_consensus',basename(bamfname));
+    
     #Delete bai file
     file.remove(baifname);
     
-    return(con_seq);
+    return(con_seq_final);
   }else{
     return(NA)
   }
