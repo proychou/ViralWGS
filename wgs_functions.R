@@ -260,13 +260,14 @@ clean_consensus_hhv6<-function(sampname,merged_bam_folder,mapped_reads_folder){
 	require(Rsamtools); 
 	require(GenomicAlignments);
 	require(Biostrings);
-	mapping_stats<-data.frame(ref=c('hhv6A_ref_U1102','hhv6B_ref_z29'),
-														bamfname_merged=c(grep(sampname,list.files(merged_bam_folder,'_hhv6A_ref_U1102*.bam$',full.names=T),value=T),
-																							grep(sampname,list.files(merged_bam_folder,'_hhv6B_ref_z29*.bam$',full.names=T),value=T)),
-														bamfname_mapped=c(grep(sampname,list.files(mapped_reads_folder,'_hhv6A_ref_U1102.*bam$',full.names=T),value=T),
-																							grep(sampname,list.files(mapped_reads_folder,'_hhv6B_ref_z29.*bam$',full.names=T),value=T)),
-														mapped_reads=0,perc_Ns=0,num_Ns=0,width=0,
-														stringsAsFactors=F);
+	mapping_stats<-data.frame(
+		ref=c('hhv6A_ref_U1102','hhv6B_ref_z29'),
+		bamfname_merged=c(grep(sampname,list.files(merged_bam_folder,'_hhv6A_ref_U1102*.bam$',full.names=T),value=T),
+											grep(sampname,list.files(merged_bam_folder,'_hhv6B_ref_z29*.bam$',full.names=T),value=T)),
+		bamfname_mapped=c(grep(sampname,list.files(mapped_reads_folder,'_hhv6A_ref_U1102.*bam$',full.names=T),value=T),
+											grep(sampname,list.files(mapped_reads_folder,'_hhv6B_ref_z29.*bam$',full.names=T),value=T)),
+		mapped_reads=0,perc_Ns=0,num_Ns=0,width=0,
+		stringsAsFactors=F);
 	
 	#Import mapped reads + assembly and generate consensus
 	con_seqs<-lapply(mapping_stats$bamfname_merged,generate_consensus);
@@ -276,7 +277,8 @@ clean_consensus_hhv6<-function(sampname,merged_bam_folder,mapped_reads_folder){
 	rm(dummyvar)
 	
 	#Compute #mapped reads and %Ns
-	mapping_stats$mapped_reads<-unlist(lapply(mapping_stats$bamfname_mapped,n_mapped_reads));
+	mapping_stats$mapped_reads_ref<-unlist(lapply(mapping_stats$bamfname_mapped,n_mapped_reads));
+	mapping_stats$mapped_reads_assemblyref<-unlist(lapply(mapping_stats$bamfname_merged,n_mapped_reads));
 	mapping_stats$num_Ns<-unlist(lapply(con_seqs,function(x)sum(letterFrequency(x,c('N','+')))));
 	mapping_stats$width<-unlist(lapply(con_seqs,width));
 	mapping_stats$perc_Ns<-100*mapping_stats$num_Ns/mapping_stats$width;
