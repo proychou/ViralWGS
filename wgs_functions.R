@@ -16,10 +16,11 @@ n_mapped_reads<-function(bamfname){
 
 
 #Make a new reference from scaffolds
-make_ref_from_assembly<-function(bamfname,reffname,ncores){
+make_ref_from_assembly<-function(bamfname,reffname){
 	require(Rsamtools);
 	require(GenomicAlignments);
 	require(parallel)
+	ncores<-detectCores();
 	
 	#Read reference sequence
 	ref_seq<-readDNAStringSet(reffname);
@@ -39,7 +40,7 @@ make_ref_from_assembly<-function(bamfname,reffname,ncores){
 		gal<-readGAlignments(bamfname,index=baifname,param=params);
 
 		#Remove any contigs with width <100 bp
-		gal<-gal[qwidth(gal)>100];
+		gal<-gal[qwidth(gal)>200];
 		
 		#First lay contigs on reference space--this removes insertions and produces a seq of the same length as ref
 		qseq_on_ref<-sequenceLayer(mcols(gal)$seq,cigar(gal),from="query",to="reference");
@@ -113,6 +114,7 @@ make_ref_from_assembly<-function(bamfname,reffname,ncores){
 		file.remove(baifname);
 		
 	}else{
+		print('Bam file could not be opened.')
 		return(NA)
 	}
 }
