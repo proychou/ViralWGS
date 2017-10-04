@@ -223,7 +223,7 @@ generate_consensus<-function(bamfname){
   }
 }
 
-clean_consensus_hsv<-function(sampname,merged_bam_folder){
+clean_consensus_hsv<-function(sampname,merged_bam_folder,mapped_reads_folder){
   require(Rsamtools); 
   require(GenomicAlignments);
   require(Biostrings);
@@ -231,29 +231,29 @@ clean_consensus_hsv<-function(sampname,merged_bam_folder){
                             bamfname_merged=c(grep(sampname,list.files(merged_bam_folder,'_hsv1_ref*.bam$',full.names=T),value=T),
                                               grep(sampname,list.files(merged_bam_folder,'_hsv2_sd90e*.bam$',full.names=T),value=T),
                                               grep(sampname,list.files(merged_bam_folder,'_hsv2_ref_hg52*.bam$',full.names=T),value=T)),
-                            perc_Ns=0,num_Ns=0,width=0,
+  													bamfname_merged=c(grep(sampname,list.files(mapped_reads_folder,'_hsv1_ref*.bam$',full.names=T),value=T),
+  																						grep(sampname,list.files(mapped_reads_folder,'_hsv2_sd90e*.bam$',full.names=T),value=T),
+  																						grep(sampname,list.files(mapped_reads_folder,'_hsv2_ref_hg52*.bam$',full.names=T),value=T)),
+  													mapped_reads_ref=0,mapped_reads_assemblyref=0,perc_Ns=0,num_Ns=0,width=0,
                             stringsAsFactors=F);
   
   #Import mapped reads + assembly and generate consensus
   con_seqs<-lapply(mapping_stats$bamfname_merged,generate_consensus);
   if(!dir.exists('./consensus_seqs_all')) dir.create('./consensus_seqs_all');
   dummyvar<-lapply(con_seqs,function(x)
-    writeXStringSet(x,file=paste('./consensus_seqs_all/',names(x),'.fasta',sep=''),format='fasta'));
+  	writeXStringSet(x,file=paste('./consensus_seqs_all/',names(x),'.fasta',sep=''),format='fasta'));
   rm(dummyvar)
   
-  #Compute %Ns
+  #Compute #mapped reads and %Ns
+  mapping_stats$mapped_reads_ref<-unlist(lapply(mapping_stats$bamfname_mapped,n_mapped_reads));
+  mapping_stats$mapped_reads_assemblyref<-unlist(lapply(mapping_stats$bamfname_merged,n_mapped_reads));
   mapping_stats$num_Ns<-unlist(lapply(con_seqs,function(x)sum(letterFrequency(x,c('N','+')))));
   mapping_stats$width<-unlist(lapply(con_seqs,width));
   mapping_stats$perc_Ns<-100*mapping_stats$num_Ns/mapping_stats$width;
   if(!dir.exists('./stats/')) dir.create('./stats/');
   write.csv(mapping_stats,file=paste('./stats/',sampname,'_mappingstats.csv',sep=''),row.names=F);
   
-  #Write the best consensus
-  if(!dir.exists('./cleaned_consensus')) dir.create('./cleaned_consensus');
-  con_seq<-con_seqs[[which.min(mapping_stats$perc_Ns)]];
-  writeXStringSet(con_seq,file=paste('./cleaned_consensus/',names(con_seq),'.fasta',sep=''),format='fasta');
-  
-  return(con_seq)
+  return(TRUE)
 }
 
 clean_consensus_hhv6<-function(sampname,merged_bam_folder,mapped_reads_folder){
