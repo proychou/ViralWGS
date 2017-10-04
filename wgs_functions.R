@@ -228,12 +228,12 @@ clean_consensus_hsv<-function(sampname,merged_bam_folder,mapped_reads_folder){
   require(GenomicAlignments);
   require(Biostrings);
   mapping_stats<-data.frame(ref=c('hsv1_ref','hsv2_sd90e','hsv2_ref_hg52'),
-                            bamfname_merged=c(grep(sampname,list.files(merged_bam_folder,'_hsv1_ref*.bam$',full.names=T),value=T),
-                                              grep(sampname,list.files(merged_bam_folder,'_hsv2_sd90e*.bam$',full.names=T),value=T),
-                                              grep(sampname,list.files(merged_bam_folder,'_hsv2_ref_hg52*.bam$',full.names=T),value=T)),
-  													bamfname_merged=c(grep(sampname,list.files(mapped_reads_folder,'_hsv1_ref*.bam$',full.names=T),value=T),
-  																						grep(sampname,list.files(mapped_reads_folder,'_hsv2_sd90e*.bam$',full.names=T),value=T),
-  																						grep(sampname,list.files(mapped_reads_folder,'_hsv2_ref_hg52*.bam$',full.names=T),value=T)),
+                            bamfname_merged=c(grep(sampname,list.files(merged_bam_folder,'_hsv1_ref.*bam$',full.names=T),value=T),
+                                              grep(sampname,list.files(merged_bam_folder,'_hsv2_sd90e.*bam$',full.names=T),value=T),
+                                              grep(sampname,list.files(merged_bam_folder,'_hsv2_ref_hg52.*bam$',full.names=T),value=T)),
+  													bamfname_mapped=c(grep(sampname,list.files(mapped_reads_folder,'_hsv1_ref.*bam$',full.names=T),value=T),
+  																						grep(sampname,list.files(mapped_reads_folder,'_hsv2_sd90e.*bam$',full.names=T),value=T),
+  																						grep(sampname,list.files(mapped_reads_folder,'_hsv2_ref_hg52.*bam$',full.names=T),value=T)),
   													mapped_reads_ref=0,mapped_reads_assemblyref=0,perc_Ns=0,num_Ns=0,width=0,
                             stringsAsFactors=F);
   
