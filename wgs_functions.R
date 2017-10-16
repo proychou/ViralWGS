@@ -379,7 +379,7 @@ get_year<-function(in_string){
 }
 get_sampid<-function(in_string){
 	if(!is.na(get_year(in_string))){
-		sampid<-strsplit(strsplit(in_string,'-')[[1]][2],'_')[[1]][1];
+		return(strsplit(strsplit(in_string,'-')[[1]][2],'_')[[1]][1]);
 	}else{
 		return(NA);
 	}
