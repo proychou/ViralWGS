@@ -365,3 +365,24 @@ vcf_to_df<-function(vcf_fname,sampid){
 	return(results)
 }
 
+
+#Extract VRC samp year and ID from the fastq file name
+get_year<-function(in_string){
+	yr<-strsplit(in_string,"-")[[1]][1];
+	if(grepl("^[0-9]{1,2}_(19[0-9][0-9]|20[0,1][0-9])",yr)){
+		return(strsplit(yr,'_')[[1]][2]);
+	}else if(!grepl("19[0-9][0-9]|20[0,1][0-9]",yr)){
+		return(NA)
+	}else{
+		return(yr)
+	}
+}
+get_sampid<-function(in_string){
+	if(!is.na(get_year(in_string))){
+		sampid<-strsplit(strsplit(in_string,'-')[[1]][2],'_')[[1]][1];
+	}else{
+		return(NA);
+	}
+}
+
+
