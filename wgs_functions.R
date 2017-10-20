@@ -85,21 +85,20 @@ make_ref_from_assembly<-function(bamfname,reffname){
 		
 		#Now the beauty part of inserting the strings back in
 		#Split ref seq by the insert positions
-		new_strs<-DNAStringSet(rep('',nrow(all_ins_merged)))
+		new_strs<-DNAStringSet(rep('',nrow(all_ins_merged)+1))
 		for(i in 1:nrow(all_ins_merged)){
 			if(i==1){
 				new_strs[i]<-paste0(extractAt(con_seq,IRanges(start=1,end=all_ins_merged$end_ref[i]))[[1]],
 														all_ins_merged$ins_seq[i]);
-			}else if(i==nrow(all_ins_merged)){
-				new_strs[i]<-paste0(all_ins_merged$ins_seq[i],
-				                    extractAt(con_seq,IRanges(start=all_ins_merged$start_ref[i],
-				                                              end=width(con_seq)))[[1]])
 			}else{
 				new_strs[i]<-paste0(extractAt(con_seq,IRanges(start=all_ins_merged$start_ref[i-1],
 				                                              end=all_ins_merged$end_ref[i]))[[1]],
 				                    all_ins_merged$ins_seq[i]);
 			}
 		}
+		#Last bit
+		new_strs[i+1]<-paste0(extractAt(con_seq,IRanges(start=all_ins_merged$start_ref[i],
+																									end=width(con_seq)))[[1]])
 		temp_str<-paste0(as.character(new_strs),collapse='');
 		
 		#Remove gaps to get final sequence
@@ -384,5 +383,6 @@ get_sampid<-function(in_string){
 		return(NA);
 	}
 }
+
 
 
