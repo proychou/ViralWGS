@@ -245,6 +245,29 @@ clean_consensus_hhv6<-function(sampname,merged_bam_folder,mapped_reads_folder){
 	return(TRUE)
 }
 
+#Find coverage at each position in the alignment
+cov_by_pos<-function(bamfname){
+	require(Rsamtools);
+	require(GenomicAlignments);
+	
+	if(file.exists(bamfname)&class(try(scanBamHeader(bamfname),silent=T))!='try-error'){
+		#Import alignment
+		if(file.exists(paste(bamfname,'.bai',sep='')))
+			file.remove(paste(bamfname,'.bai',sep='')); #remove any old index files
+		baifname<-indexBam(bamfname); #Make an index file
+		params<-ScanBamParam(flag=scanBamFlag(isUnmappedQuery=FALSE),
+												 what=c('qname','rname','strand','pos','qwidth','mapq','cigar','seq'));
+		gal<-readGAlignments(bamfname,index=baifname,param=params);
+		cov<-coverage(gal);
+		file.remove(baifname);
+		return(cov)
+		
+	}else{
+		return(NA)
+	}
+}
+
+
 
 #Compute coverage stats
 get_coverage<-function(bamfname){
