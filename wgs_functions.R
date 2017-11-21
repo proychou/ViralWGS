@@ -147,15 +147,23 @@ generate_consensus<-function(bamfname){
     gal<-readGAlignments(bamfname,index=baifname,param=params);
     # summary(gal);
     
-    #Remove any contigs with mapq <2
-    gal<-gal[mcols(gal)$mapq>2];
+    #Remove any contigs with mapq <2 -- this leads to a loss of a lot of the DR seqs even though there are reads there
+    # gal<-gal[mcols(gal)$mapq>2];
     
     #First lay reads on reference space--this doesn't include insertions
     qseq_on_ref<-sequenceLayer(mcols(gal)$seq,cigar(gal),from="query",to="reference");
 
     #Make a consensus matrix and get a consensus sequence from the aligned scaffolds
-    cm<-consensusMatrix(qseq_on_ref,as.prob=T,shift=start(gal)-1,width=seqlengths(gal))[c('A','C','G','T','N','-'),];
-    cm['N',colSums(cm)==0]<-1;
+    # cm<-consensusMatrix(qseq_on_ref,as.prob=T,shift=start(gal)-1,width=seqlengths(gal))[c('A','C','G','T','N','-'),];
+    # cm['N',colSums(cm)==0]<-1;
+    
+    #Edit to include a coverage threshold
+    cm<-consensusMatrix(qseq_on_ref,as.prob=F,shift=start(gal)-1,width=seqlengths(gal))[c('A','C','G','T','N','-'),];
+    poor_cov<-which(colSums(cm)<10);
+    cm<-apply(cm,2,function(x)x/sum(x));
+    cm[,poor_cov]<-0;
+    cm['N',poor_cov]<-1;
+    
     tmp_str<-strsplit(consensusString(cm,ambiguityMap='?',threshold=0.5),'')[[1]];
     ambig_sites<-which(tmp_str=='?');
     ambig_bases<-unlist(lapply(ambig_sites,function(i){mixedbase<-paste(names(cm[,i])[cm[,i]>0],collapse=''); 
