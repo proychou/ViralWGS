@@ -192,6 +192,7 @@ clean_consensus_hsv<-function(sampname,merged_bam_folder,mapped_reads_folder){
   require(Rsamtools); 
   require(GenomicAlignments);
   require(Biostrings);
+	sampname<-paste0(sampname,'_');
   mapping_stats<-data.frame(ref=c('hsv1_ref','hsv2_sd90e','hsv2_ref_hg52'),
                             bamfname_merged=c(grep(sampname,list.files(merged_bam_folder,'_hsv1_ref.*bam$',full.names=T),value=T),
                                               grep(sampname,list.files(merged_bam_folder,'_hsv2_sd90e.*bam$',full.names=T),value=T),
