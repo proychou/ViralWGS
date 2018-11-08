@@ -295,8 +295,8 @@ clean_consensus_hhv8<-function(sampname,merged_bam_folder,mapped_reads_folder){
   require(Biostrings);
   sampname<-paste0(sampname,'_');
   mapping_stats<-data.frame(ref='hhv8_ref',
-                            bamfname_merged=grep(sampname,list.files(merged_bam_folder,'_hhv8_ref.*bam$',full.names=T),value=T),
-                            bamfname_mapped=grep(sampname,list.files(mapped_reads_folder,'_hhv8_ref.*bam$',full.names=T),value=T),
+                            bamfname_merged=grep(sampname,list.files(merged_bam_folder,'_hhv8.*bam$',full.names=T),value=T),
+                            bamfname_mapped=grep(sampname,list.files(mapped_reads_folder,'_hhv8.*bam$',full.names=T),value=T),
                             mapped_reads_ref=0,mapped_reads_assemblyref=0,perc_Ns=0,num_Ns=0,width=0,
                             stringsAsFactors=F);
   
