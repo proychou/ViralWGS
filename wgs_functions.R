@@ -39,7 +39,7 @@ make_ref_from_assembly<-function(bamfname,reffname){
 												 what=c('qname','rname','strand','pos','qwidth','mapq','cigar','seq'));
 		gal<-readGAlignments(bamfname,index=baifname,param=params);
 
-		#Remove any contigs with width <100 bp
+		#Remove any contigs with width <200 bp
 		gal<-gal[qwidth(gal)>200];
 		
 		#First lay contigs on reference space--this removes insertions and produces a seq of the same length as ref
@@ -48,13 +48,14 @@ make_ref_from_assembly<-function(bamfname,reffname){
 																			shift=mcols(gal)$pos-1,Lpadding.letter='N',Rpadding.letter='N');
 		
 		#Make a consensus matrix and get a consensus sequence from the aligned scaffolds
-		#to do: also '-'s should be filled, what if assembly is guessing them wrong?
 		cm<-consensusMatrix(qseq_on_ref_aligned,as.prob=T,shift=0)[c('A','C','G','T','N','-'),];
-		cm[c('N','-'),]<-0;
+		# cm[c('N','-'),]<-0;
+		cm['N',]<-0;
 		cm<-apply(cm,2,function(x)if(all(x==0))return(x) else return(x/sum(x)));
 		cm['N',colSums(cm)==0]<-1;
 		con_seq<-DNAStringSet(consensusString(cm,threshold=0.25));
 		con_seq<-DNAStringSet(gsub('\\+','N',con_seq));
+		
 		
 		#Now fill in the Ns with the reference
 		temp<-as.matrix(con_seq);
