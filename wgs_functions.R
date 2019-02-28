@@ -349,10 +349,12 @@ cov_by_pos<-function(bamfname){
 
 #Compute coverage stats
 get_coverage<-function(bamfname){
-  require(Rsamtools);
-  require(GenomicAlignments);
-  
-  if(file.exists(bamfname)&class(try(scanBamHeader(bamfname),silent=T))!='try-error'){
+ 	if(length(bamfname)==0){
+ 		mapped<-NA; avg_cov<-NA;
+ 		sd_cov<-NA; min_cov<-NA; max_cov<-NA;
+ 	}else if(file.exists(bamfname)&class(try(scanBamHeader(bamfname),silent=T))!='try-error'){
+  	require(Rsamtools);
+  	require(GenomicAlignments);
     #Import alignment
     if(file.exists(paste(bamfname,'.bai',sep='')))
       file.remove(paste(bamfname,'.bai',sep='')); #remove any old index files
@@ -369,11 +371,8 @@ get_coverage<-function(bamfname){
     max_cov<-max(cov);
     file.remove(baifname);
   }else{
-    mapped<-NA;
-    avg_cov<-NA;
-    sd_cov<-NA;
-    min_cov<-NA;
-    max_cov<-NA;
+    mapped<-NA; avg_cov<-NA;
+    sd_cov<-NA; min_cov<-NA; max_cov<-NA;
   }
   return(data.frame(mapped,avg_cov,sd_cov,min_cov,max_cov))
 }
