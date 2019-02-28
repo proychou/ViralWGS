@@ -398,13 +398,15 @@ fastqc_readstats<-function(fname){
 
 #Compute stats on a consensus seq (or really any fasta file)
 conseq_stats<-function(fname){
-  if(length(fname)==0|!file.exists(fname)){
+  if(length(fname)==0){
   	width<-NA; Ns<-NA; percNs<-NA;
-  }else{
+  }else if(file.exists(fname)){
   	conseq<-readDNAStringSet(fname,format='fasta');
   	width<-width(conseq);
   	Ns<-sum(letterFrequency(conseq,c('N','+')));
   	percNs<-100*Ns/width;
+  }else{
+  	width<-NA; Ns<-NA; percNs<-NA;
   }
   return(data.frame(width,Ns,percNs));
 }
