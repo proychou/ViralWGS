@@ -53,7 +53,7 @@ make_ref_from_assembly<-function(bamfname,reffname){
 		cm['N',]<-0;
 		cm<-apply(cm,2,function(x)if(all(x==0))return(x) else return(x/sum(x)));
 		cm['N',colSums(cm)==0]<-1;
-		con_seq<-DNAStringSet(consensusString(cm,threshold=0.25));
+		con_seq<-DNAStringSet(gsub('\\?','N',consensusString(cm,threshold=0.25)));
 		con_seq<-DNAStringSet(gsub('\\+','N',con_seq));
 		
 		
