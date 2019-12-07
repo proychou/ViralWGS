@@ -396,7 +396,6 @@ clean_consensus_tp<-function(sampname,merged_bam_folder,mapped_reads_folder,ref)
   require(Rsamtools); 
   require(GenomicAlignments);
   require(Biostrings);
-  sampname<-paste0(sampname,'_');
   mapping_stats<-data.frame(ref=ref,
                             bamfname_merged=grep(sampname,list.files(merged_bam_folder,'*.bam$',full.names=T),value=T),
                             bamfname_mapped=grep(sampname,list.files(mapped_reads_folder,'*.bam$',full.names=T),value=T),
