@@ -440,8 +440,8 @@ clean_consensus_hcov<-function(sampname,remapped_bamfname,mappedtoref_bamfname,r
   #Compute #mapped reads and %Ns
   mapping_stats$mapped_reads_ref<-unlist(lapply(mapping_stats$mappedtoref_bam,n_mapped_reads));
   mapping_stats$mapped_reads_assemblyref<-unlist(lapply(mapping_stats$remapped_bam,n_mapped_reads));
-  mapping_stats$num_Ns<-unlist(lapply(con_seqs,function(x)sum(letterFrequency(x,c('N','+')))));
-  mapping_stats$width<-unlist(lapply(con_seqs,width));
+  mapping_stats$num_Ns<-sum(letterFrequency(con_seq,c('N','+')));
+  mapping_stats$width<-width(con_seq);
   mapping_stats$perc_Ns<-100*mapping_stats$num_Ns/mapping_stats$width;
   if(!dir.exists('./stats/')) dir.create('./stats/');
   write.csv(mapping_stats,file=paste('./stats/',sampname,'_mappingstats.csv',sep=''),row.names=F);
