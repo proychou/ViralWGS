@@ -183,9 +183,9 @@ generate_consensus<-function(bamfname){
     names(con_seq)<-sub('.bam','_consensus',basename(bamfname));
     rm(tmp_str);
     
-    #Remove gaps to get final sequence
-    # con_seq_final<-DNAStringSet(gsub('-','',temp_str));
-    con_seq_final<-DNAStringSet(gsub('-','',con_seq));
+    #Remove gaps and leading and trailing Ns to get final sequence
+    con_seq_trimmed<-DNAStringSet(gsub("N*N$",'',gsub("^N*",'',as.character(con_seq))));
+    con_seq_final<-DNAStringSet(gsub('-','',as.character(con_seq_trimmed)));
     names(con_seq_final)<-sub('.bam','_consensus',basename(bamfname));
     
     #Delete bai file
@@ -342,7 +342,7 @@ clean_consensus_rsv<-function(sampname,merged_bam_folder,mapped_reads_folder){
 														stringsAsFactors=F);
 	
 	#Import mapped reads + assembly and generate consensus
-	con_seqs<-lapply(mapping_stats$bamfname_merged,generate_consensus);
+	con_seqs<-lapply(mapping_stats$bamfname_merged,sensus);
 	if(!dir.exists('./consensus_seqs_all')) dir.create('./consensus_seqs_all');
 	dummyvar<-lapply(con_seqs,function(x)
 		writeXStringSet(x,file=paste('./consensus_seqs_all/',names(x),'.fasta',sep=''),format='fasta'));
@@ -373,7 +373,7 @@ clean_consensus_measles<-function(sampname,merged_bam_folder,mapped_reads_folder
 														stringsAsFactors=F);
 	
 	#Import mapped reads + assembly and generate consensus
-	con_seqs<-lapply(mapping_stats$bamfname_merged,generate_consensus);
+	con_seqs<-lapply(mapping_stats$bamfname_merged,sensus);
 	if(!dir.exists('./consensus_seqs_all')) dir.create('./consensus_seqs_all');
 	dummyvar<-lapply(con_seqs,function(x)
 		writeXStringSet(x,file=paste('./consensus_seqs_all/',names(x),'.fasta',sep=''),format='fasta'));
@@ -403,7 +403,7 @@ clean_consensus_tp<-function(sampname,merged_bam_folder,mapped_reads_folder,ref)
                             stringsAsFactors=F);
   
   #Import mapped reads + assembly and generate consensus
-  con_seqs<-lapply(mapping_stats$bamfname_merged,generate_consensus);
+  con_seqs<-lapply(mapping_stats$bamfname_merged,sensus);
   if(!dir.exists('./consensus_seqs_all')) dir.create('./consensus_seqs_all');
   dummyvar<-lapply(con_seqs,function(x)
     writeXStringSet(x,file=paste('./consensus_seqs_all/',names(x),'.fasta',sep=''),format='fasta'));
@@ -433,11 +433,9 @@ clean_consensus_hcov<-function(sampname,remapped_bamfname,mappedtoref_bamfname,r
                             stringsAsFactors=F);
   
   #Import mapped reads + assembly and generate consensus
-  con_seqs<-lapply(mapping_stats$remapped_bam,generate_consensus);
+  con_seq<-sensus(mapping_stats$remapped_bam);
   if(!dir.exists('./consensus_seqs')) dir.create('./consensus_seqs');
-  dummyvar<-lapply(con_seqs,function(x)
-    writeXStringSet(x,file=paste('./consensus_seqs/',names(x),'.fasta',sep=''),format='fasta'));
-  rm(dummyvar)
+  writeXStringSet(con_seq,file=paste('./consensus_seqs/',sampname,'.fasta',sep=''),format='fasta');
   
   #Compute #mapped reads and %Ns
   mapping_stats$mapped_reads_ref<-unlist(lapply(mapping_stats$mappedtoref_bam,n_mapped_reads));
