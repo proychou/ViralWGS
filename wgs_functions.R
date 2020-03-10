@@ -421,6 +421,37 @@ clean_consensus_tp<-function(sampname,merged_bam_folder,mapped_reads_folder,ref)
   return(TRUE)
 }
 
+#hCoV (added Mar 2020)
+clean_consensus_hcov<-function(sampname,remapped_bamfname,mappedtoref_bamfname,ref){
+  require(Rsamtools); 
+  require(GenomicAlignments);
+  require(Biostrings);
+  mapping_stats<-data.frame(ref=ref,
+                            remapped_bam=remapped_bamfname,
+                            mappedtoref_bam=mappedtoref_bamfname,
+                            mapped_reads_ref=0,mapped_reads_assemblyref=0,perc_Ns=0,num_Ns=0,width=0,
+                            stringsAsFactors=F);
+  
+  #Import mapped reads + assembly and generate consensus
+  con_seqs<-lapply(mapping_stats$remapped_bam,generate_consensus);
+  if(!dir.exists('./consensus_seqs')) dir.create('./consensus_seqs');
+  dummyvar<-lapply(con_seqs,function(x)
+    writeXStringSet(x,file=paste('./consensus_seqs/',names(x),'.fasta',sep=''),format='fasta'));
+  rm(dummyvar)
+  
+  #Compute #mapped reads and %Ns
+  mapping_stats$mapped_reads_ref<-unlist(lapply(mapping_stats$mappedtoref_bam,n_mapped_reads));
+  mapping_stats$mapped_reads_assemblyref<-unlist(lapply(mapping_stats$remapped_bam,n_mapped_reads));
+  mapping_stats$num_Ns<-unlist(lapply(con_seqs,function(x)sum(letterFrequency(x,c('N','+')))));
+  mapping_stats$width<-unlist(lapply(con_seqs,width));
+  mapping_stats$perc_Ns<-100*mapping_stats$num_Ns/mapping_stats$width;
+  if(!dir.exists('./stats/')) dir.create('./stats/');
+  write.csv(mapping_stats,file=paste('./stats/',sampname,'_mappingstats.csv',sep=''),row.names=F);
+  
+  return(TRUE)
+}
+
+
 
 #Find coverage at each position in the alignment
 cov_by_pos<-function(bamfname){
