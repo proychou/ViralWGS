@@ -342,7 +342,7 @@ clean_consensus_rsv<-function(sampname,merged_bam_folder,mapped_reads_folder){
 														stringsAsFactors=F);
 	
 	#Import mapped reads + assembly and generate consensus
-	con_seqs<-lapply(mapping_stats$bamfname_merged,sensus);
+	con_seqs<-lapply(mapping_stats$bamfname_merged,generate_consensus);
 	if(!dir.exists('./consensus_seqs_all')) dir.create('./consensus_seqs_all');
 	dummyvar<-lapply(con_seqs,function(x)
 		writeXStringSet(x,file=paste('./consensus_seqs_all/',names(x),'.fasta',sep=''),format='fasta'));
@@ -373,7 +373,7 @@ clean_consensus_measles<-function(sampname,merged_bam_folder,mapped_reads_folder
 														stringsAsFactors=F);
 	
 	#Import mapped reads + assembly and generate consensus
-	con_seqs<-lapply(mapping_stats$bamfname_merged,sensus);
+	con_seqs<-lapply(mapping_stats$bamfname_merged,generate_consensus);
 	if(!dir.exists('./consensus_seqs_all')) dir.create('./consensus_seqs_all');
 	dummyvar<-lapply(con_seqs,function(x)
 		writeXStringSet(x,file=paste('./consensus_seqs_all/',names(x),'.fasta',sep=''),format='fasta'));
