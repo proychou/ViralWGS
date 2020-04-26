@@ -525,6 +525,7 @@ fastqc_readstats<-function(fname){
 
 #Compute stats on a consensus seq (or really any fasta file)
 conseq_stats<-function(fname){
+  require(Biostrings)
   if(length(fname)==0){
   	width<-NA; Ns<-NA; percNs<-NA;
   }else if(file.exists(fname)){
