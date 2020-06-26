@@ -80,15 +80,19 @@ make_ref_from_assembly<-function(bamfname,reffname){
 		    ins_seq=all_ins[[i]],width_ins=width(all_ins[[i]]))),
 		  mc.cores=ncores));
 		all_ins_merged<-all_ins_merged[order(all_ins_merged$end_ref),];
+		
 		# write.csv(all_ins_merged,'./testing/all_ins.csv',row.names=F);
 		
 		#TO DO: Check for overlaps--should be minimal since scaffolds don't usually overlap that much
 		if(any(table(all_ins_merged$start_ref)>1)){
-		  browser()
+		  print('Overlapping insertions')
+		  #not the best way, but just pick the first for now
+		  all_ins_merged<-all_ins_merged[!duplicated(all_ins_merged[,c('start_ref','end_ref')]),];
+		}
 		
 		#Now the beauty part of inserting the strings back in
 		#Split ref seq by the insert positions
-		}else if(nrow(all_ins_merged)!=0){
+		if(nrow(all_ins_merged)!=0){
 		  new_strs<-DNAStringSet(rep('',nrow(all_ins_merged)+1))
 		  for(i in 1:nrow(all_ins_merged)){
 		    if(i==1){
