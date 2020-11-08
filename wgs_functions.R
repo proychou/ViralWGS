@@ -27,12 +27,8 @@ make_ref_from_assembly<-function(bamfname,reffname){
 	
 	if(!is.na(bamfname)&class(try(scanBamHeader(bamfname),silent=T))!='try-error'){
 		
-		#Index bam if required
-		if(!file.exists(paste(bamfname,'.bai',sep=''))){
-			baifname<-indexBam(bamfname); 
-		}else{
-			baifname<-paste(bamfname,'.bai',sep='');
-		}
+		#Index bam 
+	  baifname<-indexBam(bamfname);
 		
 		#Import bam file
 		params<-ScanBamParam(flag=scanBamFlag(isUnmappedQuery=FALSE),
