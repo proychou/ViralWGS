@@ -135,8 +135,6 @@ generate_consensus<-function(bamfname){
   require(Rsamtools)
   require(GenomicAlignments)
   require(Biostrings)
-	require(parallel)
-	ncores<-detectCores()
 	
 	#for testing this function--comment out or remove
 	# bamfname<-'./testing/ABI-HHV6A_S385_L001_A.sorted.bam'
