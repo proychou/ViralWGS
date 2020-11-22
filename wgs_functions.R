@@ -528,7 +528,7 @@ conseq_stats<-function(fname){
   	width<-NA; Ns<-NA; percNs<-NA;
   }else if(file.exists(fname)){
   	conseq<-readDNAStringSet(fname,format='fasta');
-  	if(legth(conseq)>0){
+  	if(length(conseq)>0){
   	  width<-width(conseq);
   	  Ns<-sum(letterFrequency(conseq,c('N','+')));
   	  percNs<-100*Ns/width;
