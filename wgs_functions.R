@@ -528,9 +528,13 @@ conseq_stats<-function(fname){
   	width<-NA; Ns<-NA; percNs<-NA;
   }else if(file.exists(fname)){
   	conseq<-readDNAStringSet(fname,format='fasta');
-  	width<-width(conseq);
-  	Ns<-sum(letterFrequency(conseq,c('N','+')));
-  	percNs<-100*Ns/width;
+  	if(legth(conseq)>0){
+  	  width<-width(conseq);
+  	  Ns<-sum(letterFrequency(conseq,c('N','+')));
+  	  percNs<-100*Ns/width;
+  	}else{
+  	  width<-NA; Ns<-NA; percNs<-NA;
+  	}
   }else{
   	width<-NA; Ns<-NA; percNs<-NA;
   }
