@@ -52,7 +52,7 @@ for(i in 1:nrow(all_samples)){
   
   
   #Fastq info from fastqc stats
-  fqc_fnames<-grep(paste0(all_samples$fname_short[i],'_'),
+  fqc_fnames<-grep(paste0('\\/',all_samples$fname_short[i],'_'),
                    list.files(paste0(rundir,'/fastqc_reports_raw'),
                               pattern='*_fastqc.html',full.names=T),value=T);
   tmp_table<-do.call('rbind',mclapply(fqc_fnames,function(x)
@@ -66,7 +66,7 @@ for(i in 1:nrow(all_samples)){
   }
   
   #Coverage 
-  bamfname<-grep(paste0(strsplit(all_samples$fname_short[i],'_')[[1]][1],'.bam'),
+  bamfname<-grep(paste0('\\/',strsplit(as.character(all_samples$fname_short[i]),'_')[[1]][1],'.bam'),
                  list.files(paste0(rundir,'/mapped_reads'),
                             '*.bam$',full.names=T),value=T);
   if(length(bamfname)>0){
@@ -82,7 +82,7 @@ for(i in 1:nrow(all_samples)){
   
   
   #Ns in consensus
-  csfname<-grep(paste0(strsplit(all_samples$fname_short[i],'_')[[1]][1],'.fasta'),
+  csfname<-grep(paste0('\\/',strsplit(as.character(all_samples$fname_short[i]),'_')[[1]][1],'.fasta'),
                 list.files(paste0(rundir,'/consensus_seqs'),'*.fasta',
                            full.names=T),value=T);
   if(length(csfname)>0){
@@ -115,7 +115,7 @@ for(i in 1:nrow(all_samples)){
     
   }else{
     all_samples$rundate[i]<-as.character(file.info(grep(
-      all_samples$SpID[i],list.files(
+      paste0('\\/',all_samples$SpID[i]),list.files(
         paste0(rundir,'/consensus_seqs'),'*.fasta',full.names=T),
       value=T))$mtime)
   }
