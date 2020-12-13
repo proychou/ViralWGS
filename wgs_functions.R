@@ -171,7 +171,7 @@ generate_consensus<-function(bamfname){
     cm[,poor_cov]<-0;
     cm['N',poor_cov]<-1;
     
-    tmp_str<-strsplit(consensusString(cm,ambiguityMap='?',threshold=0.5),'')[[1]];
+    tmp_str<-strsplit(consensusString(cm,ambiguityMap='?',threshold=0.25),'')[[1]];
     ambig_sites<-which(tmp_str=='?');
     ambig_bases<-unlist(lapply(ambig_sites,function(i){mixedbase<-paste(names(cm[,i])[cm[,i]>0],collapse=''); 
     			 if(mixedbase%in%IUPAC_CODE_MAP) return(names(IUPAC_CODE_MAP)[IUPAC_CODE_MAP==mixedbase]) 
