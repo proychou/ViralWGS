@@ -40,7 +40,7 @@ make_ref_from_assembly<-function(bamfname,reffname){
 		
 		#First lay contigs on reference space--this removes insertions and produces a seq of the same length as ref
 		qseq_on_ref<-sequenceLayer(mcols(gal)$seq,cigar(gal),from="query",to="reference");
-		qseq_on_ref_aligned<-stackStrings(qseq_on_ref,1,max(mcols(gal)$pos+qwidth(gal)-1,width(ref_seq)),
+		qseq_on_ref_aligned<-stackStrings(qseq_on_ref,1,max(mcols(gal)$pos+width(gal)-1,width(ref_seq)),
 																			shift=mcols(gal)$pos-1,Lpadding.letter='N',Rpadding.letter='N');
 		
 		#Make a consensus matrix and get a consensus sequence from the aligned scaffolds
@@ -77,7 +77,7 @@ make_ref_from_assembly<-function(bamfname,reffname){
 		  mc.cores=ncores));
 		all_ins_merged<-all_ins_merged[order(all_ins_merged$end_ref),];
 		
-		# write.csv(all_ins_merged,'./testing/all_ins.csv',row.names=F);
+		# write.csv(all_ins_merged,'./testing_all_ins.csv',row.names=F);
 		
 		#TO DO: Check for overlaps--should be minimal since scaffolds don't usually overlap that much
 		if(any(table(all_ins_merged$start_ref)>1)){
